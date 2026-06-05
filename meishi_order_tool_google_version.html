@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>名刺発注フォーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0ede8;
+  --accent: #1a1a1a;
+  --accent-soft: #3d3d3d;
+  --muted: #888480;
+  --border: #e2dfd8;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-ui: 'DM Sans', sans-serif;
+  --tab-h: 56px;
+  --bottom-nav-h: 64px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--accent);
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: calc(var(--bottom-nav-h) + 16px);
+}
+
+/* Header */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-title {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.app-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-family: var(--font-ui);
+}
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  height: var(--bottom-nav-h);
+  z-index: 200;
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-ui);
+  color: var(--muted);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  padding: 0;
+}
+.nav-btn.active { color: var(--accent); }
+.nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+
+/* Pages */
+.page { display: none; padding: 20px; }
+.page.active { display: block; }
+
+/* Form */
+.field { margin-bottom: 16px; }
+.field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-family: var(--font-ui);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.required { color: var(--danger); font-size: 14px; line-height: 1; }
+.field input, .field select {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-family: var(--font-body);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent);
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field input::placeholder { color: #bbb; }
+.select-wrap { position: relative; }
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--muted);
+  pointer-events: none;
+}
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+  font-family: var(--font-ui);
+}
+
+/* QR upload */
+.qr-upload {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface2);
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.qr-upload:active { background: var(--border); }
+.qr-upload.has-image { padding: 12px; border-style: solid; border-color: var(--accent); }
+.qr-icon {
+  width: 36px; height: 36px;
+  margin: 0 auto 8px;
+  color: var(--muted);
+}
+.qr-label { font-size: 13px; color: var(--muted); font-family: var(--font-ui); }
+.qr-preview { max-width: 140px; max-height: 140px; border-radius: 6px; display: block; margin: 0 auto; }
+.qr-change { font-size: 11px; color: var(--muted); margin-top: 6px; font-family: var(--font-ui); }
+
+/* Buttons */
+.btn-row { display: flex; gap: 10px; margin-top: 24px; }
+.btn {
+  flex: 1;
+  padding: 16px;
+  font-size: 15px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: -0.2px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-ghost {
+  background: var(--surface2);
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  flex: none;
+  padding: 12px 20px;
+  font-size: 14px;
+}
+.btn-sm {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--accent-soft);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Stats */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.stat-num { font-size: 26px; font-weight: 700; font-family: var(--font-ui); line-height: 1; }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: var(--font-ui); }
+
+/* Filter */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.filter-row select {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent);
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+}
+
+/* List actions bar */
+.list-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  min-height: 36px;
+}
+.check-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  flex: 1;
+}
+
+/* Entry card */
+.entry-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: border-color 0.15s;
+}
+.entry-card.checked { border-color: var(--accent); background: var(--surface2); }
+.card-check {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  background: var(--surface);
+}
+.card-check.on { background: var(--accent); border-color: var(--accent); }
+.card-check svg { width: 14px; height: 14px; stroke: #fff; display: none; }
+.card-check.on svg { display: block; }
+.qr-thumb {
+  width: 52px; height: 52px;
+  border-radius: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.qr-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.qr-thumb svg { width: 24px; height: 24px; color: var(--border); }
+.card-body { flex: 1; min-width: 0; }
+.card-name { font-size: 16px; font-weight: 700; line-height: 1.2; }
+.card-spell { font-size: 12px; color: var(--muted); font-family: var(--font-ui); margin-top: 2px; }
+.card-time { font-size: 11px; color: #bbb; font-family: var(--font-ui); margin-top: 4px; }
+.card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--accent-soft);
+  font-family: var(--font-ui);
+  border: 1px solid var(--border);
+}
+
+/* Empty */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+  font-size: 14px;
+  font-family: var(--font-ui);
+}
+.empty svg { width: 40px; height: 40px; margin: 0 auto 12px; display: block; opacity: 0.3; }
+
+/* Master / Lock */
+.lock-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  text-align: center;
+}
+.lock-icon-wrap {
+  width: 72px; height: 72px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+.lock-icon-wrap svg { width: 32px; height: 32px; }
+.lock-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; font-family: var(--font-ui); }
+.lock-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; font-family: var(--font-ui); line-height: 1.6; }
+.lock-input {
+  width: 100%;
+  padding: 16px;
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent);
+  font-family: var(--font-ui);
+  outline: none;
+  margin-bottom: 14px;
+  transition: border-color 0.15s;
+}
+.lock-input:focus { border-color: var(--accent); }
+.lock-error { font-size: 13px; color: var(--danger); min-height: 20px; font-family: var(--font-ui); margin-bottom: 4px; }
+
+/* Master content */
+.master-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.master-title { font-size: 17px; font-weight: 700; font-family: var(--font-ui); }
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-family: var(--font-ui);
+  margin-bottom: 10px;
+  margin-top: 24px;
+}
+.section-label:first-of-type { margin-top: 0; }
+.add-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.add-row input {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent);
+  outline: none;
+}
+.add-row input:focus { border-color: var(--accent); }
+.master-list { display: flex; flex-direction: column; gap: 6px; }
+.master-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+.master-item span { flex: 1; }
+.del-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.del-btn:active { background: #fee; color: var(--danger); }
+.del-btn svg { width: 16px; height: 16px; }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* Pass change */
+.pass-section { margin-top: 4px; }
+.pass-row { display: flex; gap: 8px; }
+.pass-row input {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 16px;
+  font-family: var(--font-body);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent);
+  outline: none;
+  letter-spacing: 2px;
+}
+.pass-row input:focus { border-color: var(--accent); }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-h) + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 1000;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* CSV btn */
+.csv-row { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+/* Scroll to top fab */
+.select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.select-all-check {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--surface);
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.select-all-check.on { background: var(--accent); border-color: var(--accent); }
+.select-all-check svg { width: 14px; height: 14px; stroke: #fff; display: none; }
+.select-all-check.on svg { display: block; }
+.select-all-label { font-size: 13px; color: var(--muted); font-family: var(--font-ui); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">名刺発注フォーム</div>
+  <div class="app-sub">入力後「登録する」を押してください</div>
+</header>
+
+<!-- Pages -->
+<div class="page active" id="page-form">
+  <div class="field">
+    <div class="field-label">店舗 <span class="required">*</span></div>
+    <div class="select-wrap">
+      <select id="f-shop"><option value="">選択してください</option></select>
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">肩書 <span class="required">*</span></div>
+    <div class="select-wrap">
+      <select id="f-title"><option value="">選択してください</option></select>
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">名前 <span class="required">*</span></div>
+    <input type="text" id="f-name" placeholder="例：山田 花子" autocomplete="off">
+  </div>
+  <div class="field">
+    <div class="field-label">スペル（ローマ字、すべて小文字） <span class="required">*</span></div>
+    <input type="text" id="f-spell" placeholder="例：hanako yamada" autocomplete="off" oninput="this.value=this.value.toLowerCase()">
+    <div class="hint">入力すると自動で小文字に変換されます</div>
+  </div>
+  <div class="field">
+    <div class="field-label">Instagram</div>
+    <input type="text" id="f-ig" placeholder="例：@hanako_nail" autocomplete="off">
+  </div>
+  <div class="field">
+    <div class="field-label">LINE ID</div>
+    <input type="text" id="f-line" placeholder="例：hanako_line" autocomplete="off">
+  </div>
+  <div class="field">
+    <div class="field-label">Instagram QRコード</div>
+    <div class="qr-upload" id="qr-drop" onclick="document.getElementById('f-photo').click()">
+      <svg class="qr-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/>
+        <path d="M14 14h3v3"/><path d="M17 17h3v3"/><path d="M14 20h3"/>
+      </svg>
+      <div class="qr-label">タップしてQRコードをアップロード</div>
+    </div>
+    <input type="file" id="f-photo" accept="image/*" style="display:none" onchange="handlePhoto(this)">
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="clearForm()">クリア</button>
+    <button class="btn btn-primary" onclick="submitEntry()">登録する</button>
+  </div>
+</div>
+
+<div class="page" id="page-list">
+  <div class="stats-row" style="grid-template-columns:repeat(2,1fr)">
+    <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-label">合計</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-shops">0</div><div class="stat-label">店舗数</div></div>
+  </div>
+  <div class="filter-row">
+    <select id="filter-shop" onchange="renderList()"><option value="">全店舗</option></select>
+    <select id="filter-title" onchange="renderList()"><option value="">全肩書</option></select>
+  </div>
+  <div class="select-all-row" id="select-all-row" style="display:none">
+    <div class="select-all-check" id="select-all-check" onclick="toggleSelectAll()">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg>
+    </div>
+    <span class="select-all-label">すべて選択</span>
+    <div style="flex:1"></div>
+    <button class="btn btn-danger" id="del-checked-btn" onclick="showDelPassUI()" style="display:none">削除</button>
+  </div>
+  <div id="del-pass-bar" style="display:none;margin-bottom:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;">
+    <div style="font-size:12px;color:var(--muted);font-family:var(--font-ui);margin-bottom:8px;">削除するにはパスワードを入力してください</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="password" id="del-pass-input" maxlength="4" placeholder="••••" inputmode="numeric"
+        style="flex:1;padding:10px 14px;font-size:18px;letter-spacing:6px;text-align:center;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--accent);outline:none;font-family:var(--font-ui);"
+        onkeydown="if(event.key==='Enter')execDeleteChecked()">
+      <button class="btn-sm" onclick="execDeleteChecked()" style="background:var(--danger);color:#fff;border-color:var(--danger);">実行</button>
+      <button class="btn-sm" onclick="hideDelPassUI()">キャンセル</button>
+    </div>
+    <div id="del-pass-error" style="font-size:12px;color:var(--danger);min-height:18px;margin-top:6px;font-family:var(--font-ui);"></div>
+  </div>
+  <div id="list-container"></div>
+  <div class="csv-row" style="display:none">
+    <button class="btn-sm" onclick="downloadCSV()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:5px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      CSV出力
+    </button>
+  </div>
+</div>
+
+<div class="page" id="page-master">
+  <div id="master-lock-view">
+    <div class="lock-wrap">
+      <div class="lock-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div class="lock-title">マスタ管理</div>
+      <div class="lock-sub">店舗・肩書の追加や削除は<br>管理者のみ行えます</div>
+      <input class="lock-input" type="password" id="lock-input" placeholder="••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPass()">
+      <div class="lock-error" id="lock-error"></div>
+      <button class="btn btn-primary" style="width:100%;padding:16px;font-size:15px" onclick="checkPass()">ロック解除</button>
+    </div>
+  </div>
+  <div id="master-content-view" style="display:none;padding-bottom:8px">
+    <div class="master-header">
+      <div class="master-title">マスタ管理</div>
+      <button class="btn-sm" onclick="lockMaster()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        ロック
+      </button>
+    </div>
+
+    <div class="section-label">店舗リスト</div>
+    <div class="add-row">
+      <input type="text" id="new-shop" placeholder="店舗名を入力">
+      <button class="btn-sm" onclick="addMaster('shop')">追加</button>
+    </div>
+    <div class="master-list" id="shop-list"></div>
+
+    <div class="section-label">肩書リスト</div>
+    <div class="add-row">
+      <input type="text" id="new-title" placeholder="肩書を入力">
+      <button class="btn-sm" onclick="addMaster('title')">追加</button>
+    </div>
+    <div class="master-list" id="title-list"></div>
+
+    <div class="divider"></div>
+    <div class="section-label">パスワード変更</div>
+    <div class="pass-section">
+      <div class="pass-row">
+        <input type="password" id="new-pass" placeholder="新しいパスワード">
+        <button class="btn-sm" onclick="changePass()">変更</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-form" onclick="switchPage('form')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+    入力
+  </button>
+  <button class="nav-btn" id="nav-list" onclick="switchPage('list')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+      <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+    </svg>
+    一覧
+  </button>
+  <button class="nav-btn" id="nav-master" onclick="switchPage('master')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    管理
+  </button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+const DEFAULT_PASS = '1234';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwv4Zkuy153qlXztHQnduM3axG4x2sdcBFWfxkD7cgI9hKutDQJKnKwpbVK3PCZxy8N/exec';
+let data = {
+  shops: ['渋谷店','新宿店','横浜店'],
+  titles: ['オーナー','店長','スタイリスト','アシスタント'],
+  entries: [],
+  pass: DEFAULT_PASS
+};
+let photoData = null;
+let masterUnlocked = false;
+let checkedIds = new Set();
+
+function save() {
+  try { localStorage.setItem('meishi3', JSON.stringify(data)); } catch(e) {}
+}
+function load() {
+  try {
+    const s = localStorage.getItem('meishi3');
+    if (s) { const d = JSON.parse(s); Object.assign(data, d); }
+  } catch(e) {}
+}
+
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'list') { checkedIds.clear(); loadRemoteEntries().then(()=>{renderList(); updateStats();}); }
+  if (name === 'master') { renderMasterUI(); }
+}
+
+function populateDropdowns() {
+  ['f-shop','filter-shop'].forEach(id => {
+    const el = document.getElementById(id);
+    const v = el.value;
+    el.innerHTML = `<option value="">${id === 'f-shop' ? '選択してください' : '全店舗'}</option>`;
+    data.shops.forEach(s => el.innerHTML += `<option value="${s}">${s}</option>`);
+    el.value = v;
+  });
+  ['f-title','filter-title'].forEach(id => {
+    const el = document.getElementById(id);
+    const v = el.value;
+    el.innerHTML = `<option value="">${id === 'f-title' ? '選択してください' : '全肩書'}</option>`;
+    data.titles.forEach(t => el.innerHTML += `<option value="${t}">${t}</option>`);
+    el.value = v;
+  });
+}
+
+function handlePhoto(input) {
+  if (!input.files[0]) return;
+  const r = new FileReader();
+  r.onload = e => {
+    photoData = e.target.result;
+    const drop = document.getElementById('qr-drop');
+    drop.classList.add('has-image');
+    drop.innerHTML = `<img class="qr-preview" src="${photoData}" alt="QRコード"><div class="qr-change">タップして変更</div>`;
+  };
+  r.readAsDataURL(input.files[0]);
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  const ymd = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  const hm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  return ymd + ' ' + hm;
+}
+
+async function submitEntry() {
+  const shop = document.getElementById('f-shop').value;
+  const title = document.getElementById('f-title').value;
+  const name = document.getElementById('f-name').value.trim();
+  const spell = document.getElementById('f-spell').value.trim().toLowerCase();
+  if (!shop || !title || !name || !spell) { showToast('店舗・肩書・名前・スペルは必須です'); return; }
+
+  const entry = {
+    id: Date.now(),
+    ts: Date.now(),
+    shop, title, name, spell,
+    ig: document.getElementById('f-ig').value.trim(),
+    line: document.getElementById('f-line').value.trim(),
+    photo: photoData
+  };
+
+  try {
+    const res = await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(entry)
+    });
+    const result = await res.json();
+
+    if(!result.success){
+      throw new Error(result.error || '送信失敗');
+    }
+
+    data.entries.push(entry);
+    save();
+    showToast('登録しました！');
+    clearForm();
+
+  } catch(err){
+    console.error(err);
+    showToast('送信に失敗しました');
+  }
+}
+
+function clearForm() {
+  document.getElementById('f-shop').value = '';
+  document.getElementById('f-title').value = '';
+  ['f-name','f-spell','f-ig','f-line'].forEach(id => document.getElementById(id).value = '');
+  photoData = null;
+  document.getElementById('f-photo').value = '';
+  const drop = document.getElementById('qr-drop');
+  drop.classList.remove('has-image');
+  drop.innerHTML = `
+    <svg class="qr-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      <rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/>
+      <path d="M14 14h3v3"/><path d="M17 17h3v3"/><path d="M14 20h3"/>
+    </svg>
+    <div class="qr-label">タップしてQRコードをアップロード</div>`;
+}
+
+function toggleCheck(id) {
+  if (checkedIds.has(id)) checkedIds.delete(id);
+  else checkedIds.add(id);
+  updateCheckUI(id);
+  updateSelectAllState();
+  updateDelBtn();
+}
+
+function updateCheckUI(id) {
+  const card = document.querySelector(`.entry-card[data-id="${id}"]`);
+  const check = card?.querySelector('.card-check');
+  if (!card || !check) return;
+  if (checkedIds.has(id)) { card.classList.add('checked'); check.classList.add('on'); }
+  else { card.classList.remove('checked'); check.classList.remove('on'); }
+}
+
+function updateDelBtn() {
+  const btn = document.getElementById('del-checked-btn');
+  if (btn) btn.style.display = checkedIds.size > 0 ? 'block' : 'none';
+}
+
+function toggleSelectAll() {
+  const visible = getFilteredEntries();
+  const allChecked = visible.every(e => checkedIds.has(e.id));
+  if (allChecked) visible.forEach(e => checkedIds.delete(e.id));
+  else visible.forEach(e => checkedIds.add(e.id));
+  renderList();
+}
+
+function updateSelectAllState() {
+  const visible = getFilteredEntries();
+  const allChecked = visible.length > 0 && visible.every(e => checkedIds.has(e.id));
+  const el = document.getElementById('select-all-check');
+  if (el) { if (allChecked) el.classList.add('on'); else el.classList.remove('on'); }
+}
+
+function showDelPassUI() {
+  if (!checkedIds.size) return;
+  document.getElementById('del-pass-bar').style.display = 'block';
+  document.getElementById('del-pass-input').value = '';
+  document.getElementById('del-pass-error').textContent = '';
+  document.getElementById('del-pass-input').focus();
+}
+
+function hideDelPassUI() {
+  document.getElementById('del-pass-bar').style.display = 'none';
+  document.getElementById('del-pass-input').value = '';
+  document.getElementById('del-pass-error').textContent = '';
+}
+
+function execDeleteChecked() {
+  const v = document.getElementById('del-pass-input').value;
+  if (v !== data.pass) {
+    document.getElementById('del-pass-error').textContent = 'パスワードが違います';
+    document.getElementById('del-pass-input').value = '';
+    document.getElementById('del-pass-input').focus();
+    return;
+  }
+  data.entries = data.entries.filter(e => !checkedIds.has(e.id));
+  checkedIds.clear();
+  hideDelPassUI();
+  save(); renderList(); updateStats();
+  showToast('削除しました');
+}
+
+function deleteChecked() {
+  showDelPassUI();
+}
+
+function getFilteredEntries() {
+  const fs = document.getElementById('filter-shop').value;
+  const ft = document.getElementById('filter-title').value;
+  return [...data.entries].reverse().filter(e => (!fs || e.shop === fs) && (!ft || e.title === ft));
+}
+
+
+async function loadRemoteEntries() {
+  try {
+    const res = await fetch(GAS_URL);
+    const entries = await res.json();
+    data.entries = entries.map((e,idx)=>({
+      id: idx + 1,
+      ts: e.ts,
+      shop: e.shop,
+      title: e.title,
+      name: e.name,
+      spell: e.spell,
+      ig: e.ig,
+      line: e.line,
+      photo: e.photo
+    }));
+  } catch(err){
+    console.error(err);
+    showToast('一覧取得に失敗しました');
+  }
+}
+
+function renderList() {
+  updateStats();
+  const entries = getFilteredEntries();
+  const container = document.getElementById('list-container');
+  const sar = document.getElementById('select-all-row');
+  if (!entries.length) {
+    sar.style.display = 'none';
+    container.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      まだ登録がありません</div>`;
+    return;
+  }
+  sar.style.display = 'flex';
+  updateSelectAllState();
+  updateDelBtn();
+  container.innerHTML = entries.map(e => `
+    <div class="entry-card${checkedIds.has(e.id)?' checked':''}" data-id="${e.id}">
+      <div class="card-check${checkedIds.has(e.id)?' on':''}" onclick="toggleCheck(${e.id})">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg>
+      </div>
+      <div class="qr-thumb">
+        ${e.photo
+          ? `<img src="${e.photo}" alt="QR">`
+          : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/></svg>`}
+      </div>
+      <div class="card-body">
+        <div class="card-badges" style="margin-bottom:6px;margin-top:0">
+          <span class="badge">${e.shop}</span>
+          <span class="badge">${e.title}</span>
+        </div>
+        <div class="card-name">${e.name}</div>
+        ${e.spell ? `<div class="card-spell">${e.spell}</div>` : ''}
+        <div class="card-badges" style="margin-top:6px">
+          ${e.ig ? `<span class="badge">${e.ig}</span>` : ''}
+          ${e.line ? `<span class="badge">LINE: ${e.line}</span>` : ''}
+        </div>
+        <div class="card-time">${fmtDate(e.ts)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  const e = data.entries;
+  document.getElementById('s-total').textContent = e.length;
+  document.getElementById('s-shops').textContent = new Set(e.map(x => x.shop)).size;
+}
+
+function downloadCSV() {
+  if (!data.entries.length) { showToast('データがありません'); return; }
+  const header = ['登録日時','店舗','肩書','名前','スペル','Instagram','LINE'];
+  const rows = data.entries.map(e =>
+    [fmtDate(e.ts), e.shop, e.title, e.name, e.spell, e.ig, e.line]
+    .map(v => `"${(v||'').replace(/"/g,'""')}"`)
+    .join(',')
+  );
+  const csv = '\uFEFF' + [header.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = '名刺発注リスト.csv';
+  a.click();
+  showToast('CSVをダウンロードしました');
+}
+
+function renderMasterUI() {
+  if (masterUnlocked) {
+    document.getElementById('master-lock-view').style.display = 'none';
+    document.getElementById('master-content-view').style.display = 'block';
+    renderMaster();
+  } else {
+    document.getElementById('master-lock-view').style.display = 'block';
+    document.getElementById('master-content-view').style.display = 'none';
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-error').textContent = '';
+  }
+}
+
+function checkPass() {
+  const v = document.getElementById('lock-input').value;
+  if (v === data.pass) {
+    masterUnlocked = true;
+    renderMasterUI();
+  } else {
+    document.getElementById('lock-error').textContent = 'パスワードが違います';
+    document.getElementById('lock-input').value = '';
+  }
+}
+
+function lockMaster() {
+  masterUnlocked = false;
+  renderMasterUI();
+  showToast('ロックしました');
+}
+
+function changePass() {
+  const v = document.getElementById('new-pass').value.trim();
+  if (!v) { showToast('パスワードを入力してください'); return; }
+  data.pass = v;
+  save();
+  document.getElementById('new-pass').value = '';
+  showToast('パスワードを変更しました');
+}
+
+function renderMaster() {
+  const noItem = '<div style="font-size:13px;color:#bbb;padding:10px 4px">まだありません</div>';
+  document.getElementById('shop-list').innerHTML = data.shops.map((s,i) => `
+    <div class="master-item">
+      <span>${s}</span>
+      <button class="del-btn" onclick="removeMaster('shop',${i})" aria-label="削除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('') || noItem;
+  document.getElementById('title-list').innerHTML = data.titles.map((t,i) => `
+    <div class="master-item">
+      <span>${t}</span>
+      <button class="del-btn" onclick="removeMaster('title',${i})" aria-label="削除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('') || noItem;
+}
+
+function addMaster(type) {
+  const input = document.getElementById(type === 'shop' ? 'new-shop' : 'new-title');
+  const v = input.value.trim();
+  if (!v) return;
+  if (type === 'shop') data.shops.push(v);
+  else data.titles.push(v);
+  input.value = '';
+  save(); populateDropdowns(); renderMaster();
+}
+
+function removeMaster(type, i) {
+  if (type === 'shop') data.shops.splice(i, 1);
+  else data.titles.splice(i, 1);
+  save(); populateDropdowns(); renderMaster();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+load();
+populateDropdowns();
+updateStats();
+</script>
+</body>
+</html>
