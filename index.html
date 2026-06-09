@@ -738,28 +738,41 @@ async function submitEntry() {
   const title = document.getElementById('f-title').value;
   const name = document.getElementById('f-name').value.trim();
   const spell = document.getElementById('f-spell').value.trim().toLowerCase();
-  if (!shop || !title || !name || !spell) { showToast('店舗・肩書・名前・スペルは必須です'); return; }
+
+  if (!shop || !title || !name || !spell) {
+    showToast('店舗・肩書・名前・スペルは必須です');
+    return;
+  }
 
   const entry = {
     id: Date.now(),
     ts: Date.now(),
-    shop, title, name, spell,
+    shop,
+    title,
+    name,
+    spell,
     ig: document.getElementById('f-ig').value.trim(),
     line: document.getElementById('f-line').value.trim(),
     photo: photoData
   };
 
   try {
-  await fetch(GAS_URL,{
-    method:'POST',
-    mode:'no-cors',
-    body: JSON.stringify(entry)
-  });
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(entry)
+    });
 
-  data.entries.push(entry);
-  save();
-  showToast('登録しました！');
-  clearForm();
+    data.entries.push(entry);
+    save();
+    showToast('登録しました！');
+    clearForm();
+
+  } catch (err) {
+    console.error(err);
+    showToast('送信に失敗しました');
+  }
+}
 
 function clearForm() {
   document.getElementById('f-shop').value = '';
