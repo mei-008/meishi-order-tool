@@ -527,7 +527,7 @@ const LS_PASS_KEY = 'meishi_pass';
 const DEFAULT_PASS = '1234';
 
 // ─── State ──────────────────────────────────────────────────
-let GAS_URL        = '';
+let GAS_URL        = 'https://script.google.com/macros/s/AKfycbwv4Zkuy153qlXztHQnduM3axG4x2sdcBFWfxkD7cgI9hKutDQJKnKwpbVK3PCZxy8N/exec';
 let masterPass     = DEFAULT_PASS;
 let masterUnlocked = false;
 let allEntries     = [];   // サーバーから取得したデータ
@@ -538,7 +538,7 @@ let photoData      = null;
 // ─── 起動時 ─────────────────────────────────────────────────
 (function init() {
   const cfg = loadConfig();
-  GAS_URL    = cfg.gasUrl  || '';
+  GAS_URL    = cfg.gasUrl  || GAS_URL;  // localStorageにあれば優先、なければデフォルトURL
   masterPass = cfg.pass    || DEFAULT_PASS;
   populateDropdowns(cfg.shops || ['渋谷店','新宿店','横浜店'],
                    cfg.titles || ['オーナー','店長','スタイリスト','アシスタント']);
