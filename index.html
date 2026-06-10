@@ -425,26 +425,8 @@ body {
 
 <!-- ========== 管理ページ ========== -->
 <div class="page" id="page-master">
-  <!-- セットアップ未完了時 -->
-  <div id="master-setup-view" style="display:none">
-    <div class="setup-screen">
-      <div class="setup-title">初期設定</div>
-      <div class="setup-sub">Google Apps ScriptのURLを設定すると、データがスプレッドシートとDriveに保存され、複数端末で共有できます。</div>
-
-      <div class="setup-note">
-        <div class="step"><span class="step-num">1</span><span><strong>GASのコードをデプロイ</strong>（同梱の gas_code.gs をコピペ）</span></div>
-        <div class="step"><span class="step-num">2</span><span><strong>「ウェブアプリとしてデプロイ」</strong>→ アクセス権限を「全員」に設定</span></div>
-        <div class="step"><span class="step-num">3</span><span>発行された<strong>デプロイURL</strong>を下に貼り付け</span></div>
-      </div>
-
-      <div class="setup-label">GAS デプロイURL</div>
-      <input class="setup-input" type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/...">
-      <button class="btn btn-primary" style="width:100%;padding:16px;font-size:15px" onclick="saveGasUrl()">URLを保存して接続</button>
-    </div>
-  </div>
-
   <!-- ロック画面 -->
-  <div id="master-lock-view" style="display:none">
+  <div id="master-lock-view">
     <div class="lock-wrap">
       <div class="lock-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -537,11 +519,12 @@ let photoData      = null;
 
 // ─── 起動時 ─────────────────────────────────────────────────
 (function init() {
-  const cfg = loadConfig();
-  GAS_URL    = cfg.gasUrl  || GAS_URL;  // localStorageにあれば優先、なければデフォルトURL
-  masterPass = cfg.pass    || DEFAULT_PASS;
-  populateDropdowns(cfg.shops || ['渋谷店','新宿店','横浜店'],
-                   cfg.titles || ['オーナー','店長','スタイリスト','アシスタント']);
+  const cfg  = loadConfig();
+  GAS_URL    = cfg.gasUrl || GAS_URL;
+  masterPass = cfg.pass   || DEFAULT_PASS;
+  // プルダウンは空で初期化しGASから取得
+  populateDropdowns([], []);
+  fetchMaster();
 })();
 
 function loadConfig() {
@@ -566,7 +549,6 @@ function switchPage(name) {
 
 // ─── プルダウン ──────────────────────────────────────────────
 function populateDropdowns(shops, titles) {
-  saveConfig({ shops, titles });
   ['f-shop','filter-shop'].forEach(id => {
     const el = document.getElementById(id); const v = el.value;
     el.innerHTML = `<option value="">${id==='f-shop'?'選択してください':'全店舗'}</option>`;
@@ -821,15 +803,12 @@ function downloadCSV() {
 
 // ─── マスタ管理 ──────────────────────────────────────────────
 function renderMasterUI() {
-  const hasUrl = !!GAS_URL;
-  document.getElementById('master-setup-view').style.display    = hasUrl ? 'none'  : 'block';
-  document.getElementById('master-lock-view').style.display     = (hasUrl && !masterUnlocked) ? 'block' : 'none';
-  document.getElementById('master-content-view').style.display  = (hasUrl &&  masterUnlocked) ? 'block' : 'none';
-  if (hasUrl && masterUnlocked) {
-    renderMaster();
+  document.getElementById('master-lock-view').style.display    = masterUnlocked ? 'none'  : 'block';
+  document.getElementById('master-content-view').style.display = masterUnlocked ? 'block' : 'none';
+  if (masterUnlocked) {
+    fetchMaster();
     document.getElementById('gas-url-change').value = GAS_URL;
-  }
-  if (hasUrl && !masterUnlocked) {
+  } else {
     document.getElementById('lock-input').value = '';
     document.getElementById('lock-error').textContent = '';
   }
@@ -873,13 +852,12 @@ function changeGasUrl() {
   showToast('GAS URLを更新しました');
 }
 
-function renderMaster() {
-  const cfg = loadConfig();
-  const shops  = cfg.shops  || [];
-  const titles = cfg.titles || [];
+function renderMaster(shops, titles) {
   const noItem = '<div style="font-size:13px;color:#bbb;padding:10px 4px">まだありません</div>';
-  document.getElementById('shop-list').innerHTML  = shops.map((s,i)  => masterItem(s, `removeMaster('shop',${i})`)).join('')  || noItem;
-  document.getElementById('title-list').innerHTML = titles.map((t,i) => masterItem(t, `removeMaster('title',${i})`)).join('') || noItem;
+  if (shops  !== undefined) document.getElementById('shop-list').innerHTML  = shops.map((s,i)  => masterItem(s, `removeMaster('shop',${i})`)).join('')  || noItem;
+  if (titles !== undefined) document.getElementById('title-list').innerHTML = titles.map((t,i) => masterItem(t, `removeMaster('title',${i})`)).join('') || noItem;
+  // 引数なしのときはGASから取得して再描画
+  if (shops === undefined) fetchMaster();
 }
 function masterItem(label, fn) {
   return `<div class="master-item"><span>${label}</span>
@@ -887,27 +865,54 @@ function masterItem(label, fn) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button></div>`;
 }
-function addMaster(type) {
+// マスタをGASから取得
+async function fetchMaster() {
+  try {
+    const res = await gasGet({ action: 'getMaster' });
+    if (res.status !== 'ok') throw new Error(res.message);
+    populateDropdowns(res.shops, res.titles);
+    // マスタ画面が開いていれば再描画
+    if (masterUnlocked) renderMaster(res.shops, res.titles);
+  } catch(e) {
+    // 失敗時はlocalStorageのキャッシュを使う
+    const cfg = loadConfig();
+    populateDropdowns(cfg.shops || [], cfg.titles || []);
+  }
+}
+
+// マスタをGASに保存
+async function saveMasterToGas(shops, titles) {
+  try {
+    const res = await gasPost({ action: 'saveMaster', shops, titles });
+    if (res.status !== 'ok') throw new Error(res.message);
+    populateDropdowns(shops, titles);
+    renderMaster(shops, titles);
+    showToast('保存しました');
+  } catch(e) {
+    showToast('保存に失敗しました: ' + e.message);
+  }
+}
+
+async function addMaster(type) {
   const input = document.getElementById(type === 'shop' ? 'new-shop' : 'new-title');
   const v = input.value.trim();
   if (!v) return;
-  const cfg = loadConfig();
-  const shops  = cfg.shops  || [];
-  const titles = cfg.titles || [];
+  const res = await gasGet({ action: 'getMaster' });
+  const shops  = res.shops  || [];
+  const titles = res.titles || [];
   if (type === 'shop') shops.push(v);
   else titles.push(v);
-  populateDropdowns(shops, titles);
   input.value = '';
-  renderMaster();
+  await saveMasterToGas(shops, titles);
 }
-function removeMaster(type, i) {
-  const cfg = loadConfig();
-  const shops  = cfg.shops  || [];
-  const titles = cfg.titles || [];
+
+async function removeMaster(type, i) {
+  const res = await gasGet({ action: 'getMaster' });
+  const shops  = res.shops  || [];
+  const titles = res.titles || [];
   if (type === 'shop') shops.splice(i, 1);
   else titles.splice(i, 1);
-  populateDropdowns(shops, titles);
-  renderMaster();
+  await saveMasterToGas(shops, titles);
 }
 
 // ─── Toast ───────────────────────────────────────────────────
