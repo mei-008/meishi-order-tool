@@ -361,14 +361,20 @@ body {
   </div>
   <div class="field">
     <div class="field-label">Instagram</div>
-    <input type="text" id="f-ig" placeholder="例：@hanako_nail" autocomplete="off">
+    <input type="text" id="f-ig" placeholder="例：hanako_nail（@不要）" autocomplete="off">
+    <div class="hint">アカウント名からQRコードを生成するので正しく入力してください</div>
   </div>
   <div class="field">
     <div class="field-label">LINE ID</div>
     <input type="text" id="f-line" placeholder="例：hanako_line" autocomplete="off">
   </div>
   <div class="field">
-    <div class="field-label">Instagram QRコード</div>
+    <div class="field-label">TikTok</div>
+    <input type="text" id="f-tiktok" placeholder="例：hanako_nail（@不要）" autocomplete="off">
+    <div class="hint">アカウント名からQRコードを生成するので正しく入力してください</div>
+  </div>
+  <div class="field">
+    <div class="field-label">LINE QR画像</div>
     <div class="qr-upload" id="qr-drop" onclick="document.getElementById('f-photo').click()">
       <svg class="qr-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -378,6 +384,13 @@ body {
       <div class="qr-label">タップしてQRコードをアップロード</div>
     </div>
     <input type="file" id="f-photo" accept="image/*" style="display:none" onchange="handlePhoto(this)">
+  </div>
+  <div class="field">
+    <div class="field-label">備考</div>
+    <textarea id="f-note" maxlength="100" placeholder="100文字まで入力できます"
+      style="width:100%;padding:14px 16px;font-size:16px;font-family:var(--font-body);border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--accent);outline:none;resize:none;height:90px;transition:border-color 0.15s;"
+      oninput="document.getElementById('note-count').textContent=this.value.length"></textarea>
+    <div class="hint" style="text-align:right"><span id="note-count">0</span>/100</div>
   </div>
   <div class="btn-row">
     <button class="btn btn-ghost" onclick="clearForm()">クリア</button>
@@ -638,9 +651,11 @@ async function submitEntry() {
     const res = await gasPost({
       action: 'addEntry',
       data: { shop, title, name, spell,
-              ig: document.getElementById('f-ig').value.trim(),
-              line: document.getElementById('f-line').value.trim(),
-              photo: photoData || '' }
+              ig:     document.getElementById('f-ig').value.trim().replace(/^@/,''),
+              line:   document.getElementById('f-line').value.trim(),
+              tiktok: document.getElementById('f-tiktok').value.trim().replace(/^@/,''),
+              note:   document.getElementById('f-note').value.trim(),
+              photo:  photoData || '' }
     });
     if (res.status !== 'ok') throw new Error(res.message);
     showToast('登録しました！');
@@ -655,7 +670,8 @@ async function submitEntry() {
 function clearForm() {
   document.getElementById('f-shop').value  = '';
   document.getElementById('f-title').value = '';
-  ['f-name','f-spell','f-ig','f-line'].forEach(id => document.getElementById(id).value = '');
+  ['f-name','f-spell','f-ig','f-line','f-tiktok','f-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('note-count').textContent = '0';
   photoData = null;
   document.getElementById('f-photo').value = '';
   const drop = document.getElementById('qr-drop');
@@ -707,9 +723,11 @@ function renderList() {
         <div class="card-name" style="margin-top:6px">${e.name||''}</div>
         ${e.spell ? `<div class="card-spell">${e.spell}</div>` : ''}
         <div class="card-badges" style="margin-top:6px">
-          ${e.ig   ? `<span class="badge">${e.ig}</span>` : ''}
-          ${e.line ? `<span class="badge">LINE: ${e.line}</span>` : ''}
+          ${e.ig     ? `<span class="badge">IG: ${e.ig}</span>` : ''}
+          ${e.line   ? `<span class="badge">LINE: ${e.line}</span>` : ''}
+          ${e.tiktok ? `<span class="badge">TT: ${e.tiktok}</span>` : ''}
         </div>
+        ${e.note ? `<div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5">${e.note}</div>` : ''}
         <div class="card-time">${fmtDate(e.ts)}</div>
       </div>
     </div>`).join('');
@@ -788,9 +806,9 @@ async function execDeleteChecked() {
 // ─── CSV ─────────────────────────────────────────────────────
 function downloadCSV() {
   if (!allEntries.length) { showToast('データがありません'); return; }
-  const header = ['登録日時','店舗','肩書','名前','スペル','Instagram','LINE','QR画像URL'];
+  const header = ['登録日時','店舗','肩書','名前','スペル','Instagram','TikTok','LINE','Instagram QR URL','TikTok QR URL','LINE QR URL','備考'];
   const rows = allEntries.map(e =>
-    [fmtDate(e.ts), e.shop, e.title, e.name, e.spell, e.ig, e.line, e.photoUrl||'']
+    [fmtDate(e.ts), e.shop, e.title, e.name, e.spell, e.ig||'', e.tiktok||'', e.line||'', e.igQrUrl||'', e.tiktokQrUrl||'', e.photoUrl||'', e.note||'']
     .map(v => `"${(v||'').replace(/"/g,'""')}"`)
     .join(',')
   );
